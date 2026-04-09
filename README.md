@@ -113,14 +113,29 @@ RAILROAD.register(function() {
 Register a module to the lifecycle bus.
 
 **Parameters:**
-- `fn` (Function): Module function that receives `root` element
+- `fn` (Function): Module function. **Behavior depends on `options.type`:**
+  - `type: 'dom'` → receives `root` element (required)
+  - `type: 'global'` → receives nothing (no arguments)
 - `options.type` ('global'|'dom'): When to run (default: 'dom')
 - `options.name` (string): Module name for debugging
 
+**⚠️ Important:** The function signature must match the module type:
+
 ```javascript
+// ✅ CORRECT - DOM module receives root
 RAILROAD.register(function(root) {
-  // Your initialization code
-}, { type: 'dom', name: 'feature_name' });
+  root.querySelectorAll('[data-feature]')...
+}, { type: 'dom', name: 'features' });
+
+// ✅ CORRECT - Global module receives nothing
+RAILROAD.register(function() {
+  initAnalytics();
+}, { type: 'global', name: 'analytics' });
+
+// ❌ WRONG - Global module can't use root
+RAILROAD.register(function(root) {
+  root.querySelectorAll(...)  // root is undefined!
+}, { type: 'global' });  // Won't receive root parameter
 ```
 
 ### `RAILROAD.rebind(root, source)`
@@ -128,8 +143,10 @@ RAILROAD.register(function(root) {
 **☠️ THE INVARIANT:** Call after ANY manual DOM mutation.
 
 **Parameters:**
-- `root` (Element): Changed element or document
-- `source` (string): Debug label
+- `root` (Element): Changed element or document. **Only affects DOM modules:**
+  - DOM modules re-run on this element
+  - Global modules never re-run (already ran on page load)
+- `source` (string): Debug label (for logging)
 
 ```javascript
 // After innerHTML
@@ -174,10 +191,40 @@ root.querySelectorAll('[data-feature]')  // Runs every swap!
 
 ### Module Types
 
-| Type | Runs When | Use For |
-|------|-----------|---------|
-| `global` | Once on page load | Analytics, theme, websockets |
-| `dom` | After every DOM change | Tooltips, drag-drop, validation |
+**Not all parameters work with all module types:**
+
+| Type | When Runs | Receives `root`? | Re-runs on `rebind()`? | Use For |
+|------|-----------|------------------|------------------------|---------|
+| `dom` | Every DOM change | ✅ YES | ✅ YES | Tooltips, drag-drop, validation |
+| `global` | Once on page load | ❌ NO | ❌ NO | Analytics, theme, websockets |
+
+**Key Differences:**
+
+```javascript
+// DOM module - gets root, re-runs every swap
+RAILROAD.register(function(root) {  // ← root provided
+  root.querySelectorAll('[data-tooltip]')...
+}, { type: 'dom' });
+
+// Global module - no root, runs once
+RAILROAD.register(function() {  // ← no arguments
+  window.analytics = new Analytics();
+}, { type: 'global' });
+```
+
+**Common Mistake:**
+
+```javascript
+❌ WRONG:
+RAILROAD.register(function(root) {
+  root.querySelectorAll(...)  // root is undefined!
+}, { type: 'global' });  // Global modules don't receive root
+
+✅ CORRECT:
+RAILROAD.register(function() {
+  document.querySelectorAll(...)  // Use document directly
+}, { type: 'global' });
+```
 
 ### HTMX Integration
 
@@ -194,6 +241,82 @@ container.innerHTML = html;
 RAILROAD.rebind(container, 'source');
 
 // ⚠️ Applies to: innerHTML, replaceWith, appendChild, etc.
+```
+
+**⚠️ `rebind()` only affects DOM modules:**
+
+```javascript
+// DOM module - will re-run
+RAILROAD.register(function(root) {
+  root.querySelectorAll('[data-tooltip]')...
+}, { type: 'dom' });
+
+// Global module - will NOT re-run
+RAILROAD.register(function() {
+  initAnalytics();  // Only runs once on page load
+}, { type: 'global' });
+
+// After this:
+container.innerHTML = html;
+RAILROAD.rebind(container, 'update');
+// Result: DOM module re-runs, global module does NOT
+```
+
+## Common Mistakes
+
+### Mistake 1: Using `root` in Global Modules
+
+```javascript
+❌ WRONG:
+RAILROAD.register(function(root) {
+  root.querySelectorAll(...)  // root is undefined!
+}, { type: 'global', name: 'features' });
+
+✅ CORRECT (Option A - use document):
+RAILROAD.register(function() {
+  document.querySelectorAll(...)
+}, { type: 'global', name: 'features' });
+
+✅ CORRECT (Option B - use DOM type):
+RAILROAD.register(function(root) {
+  root.querySelectorAll(...)
+}, { type: 'dom', name: 'features' });  // ← Changed to 'dom'
+```
+
+### Mistake 2: Expecting Globals to Re-run
+
+```javascript
+❌ WRONG:
+RAILROAD.register(function() {
+  // This only runs ONCE on page load
+  attachTooltips();
+}, { type: 'global' });
+
+container.innerHTML = html;
+RAILROAD.rebind(container, 'update');
+// BUG: Tooltips won't work because global doesn't re-run!
+
+✅ CORRECT:
+RAILROAD.register(function(root) {
+  // This re-runs after every DOM change
+  root.querySelectorAll('[data-tooltip]')...
+}, { type: 'dom' });  // ← Must be 'dom' to re-run
+```
+
+### Mistake 3: Wrong Argument Structure
+
+```javascript
+❌ WRONG:
+RAILROAD.register(
+  { type: 'dom', name: 'tooltips' },  // Options first
+  function(root) { ... }               // Function second
+);
+
+✅ CORRECT:
+RAILROAD.register(
+  function(root) { ... },              // Function first
+  { type: 'dom', name: 'tooltips' }    // Options second
+);
 ```
 
 ## Examples
