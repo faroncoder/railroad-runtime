@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Railroad Runtime - Basic Example</title>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="../src/railroad-runtime.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 50px auto; padding: 0 20px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 15px 20px; border-radius: 4px; }
+    #content { border: 2px solid #ddd; padding: 20px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>🚂 Railroad Runtime Example</h1>
+  
+  <h2>1. HTMX Swap (Automatic)</h2>
+  <button hx-get="/example-content-1" hx-target="#content" hx-swap="innerHTML">
+    Load Content 1
+  </button>
+  <button hx-get="/example-content-2" hx-target="#content" hx-swap="innerHTML">
+    Load Content 2
+  </button>
+  
+  <div id="content">
+    <button data-toast="Hello from initial content!">Click for Toast</button>
+  </div>
+  
+  <h2>2. Manual DOM Change</h2>
+  <button onclick="manualUpdate()">Manual Update</button>
+  
+  <h2>Debug</h2>
+  <button onclick="RAILROAD.listModules()">List Modules</button>
+  <button onclick="RAILROAD.enableDebug()">Enable Debug</button>
+
+  <script>
+    // Register toast module
+    RAILROAD.register(function(root) {
+      root.querySelectorAll('[data-toast]:not([data-bound])')
+        .forEach(function(el) {
+          el.dataset.bound = '1';
+          el.addEventListener('click', function() {
+            showToast(this.dataset.toast);
+          });
+        });
+    }, { type: 'dom', name: 'toasts' });
+
+    // Toast function
+    function showToast(message) {
+      var toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 3000);
+    }
+
+    // Manual update function
+    function manualUpdate() {
+      var content = document.getElementById('content');
+      content.innerHTML = `
+        <h3>Manually Updated Content</h3>
+        <button data-toast="Hello from manual update!">Click for Toast</button>
+        <p>Notice the button still works because we called RAILROAD.rebind()</p>
+      `;
+      
+      // ⚠️ CRITICAL: Must call rebind after manual DOM change
+      RAILROAD.rebind(content, 'manual-update');
+    }
+
+    // Mock HTMX endpoints (for demo without server)
+    document.body.addEventListener('htmx:configRequest', function(e) {
+      e.preventDefault();
+      
+      var content = document.getElementById('content');
+      if (e.detail.path === '/example-content-1') {
+        content.innerHTML = `
+          <h3>Content 1 via HTMX</h3>
+          <button data-toast="Hello from Content 1!">Click for Toast</button>
+          <p>Loaded via HTMX + automatic rebind</p>
+        `;
+      } else if (e.detail.path === '/example-content-2') {
+        content.innerHTML = `
+          <h3>Content 2 via HTMX</h3>
+          <button data-toast="Hello from Content 2!">Click for Toast</button>
+          <button data-toast="Another toast!">Another Button</button>
+          <p>Multiple buttons all work</p>
+        `;
+      }
+      
+      // HTMX triggers htmx:afterSwap automatically → RAILROAD rebinds
+      document.body.dispatchEvent(new CustomEvent('htmx:afterSwap', {
+        detail: { target: content }
+      }));
+    });
+  </script>
+</body>
+</html>

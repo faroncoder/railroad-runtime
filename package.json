@@ -1,0 +1,56 @@
+{
+  "name": "railroad-runtime",
+  "version": "1.0.0",
+  "description": "Single-file execution substrate for persistent UI behaviors. Not a framework - a foundation. Makes DOM mutations explicit, auditable, and predictable.",
+  "main": "dist/railroad-runtime.js",
+  "unpkg": "dist/railroad-runtime.min.js",
+  "jsdelivr": "dist/railroad-runtime.min.js",
+  "module": "src/railroad-runtime.js",
+  "keywords": [
+    "htmx",
+    "lifecycle",
+    "dom",
+    "runtime",
+    "governance",
+    "explicit",
+    "auditable",
+    "spa",
+    "dynamic-content",
+    "event-delegation",
+    "module-system",
+    "javascript",
+    "framework-agnostic",
+    "substrate",
+    "foundation",
+    "single-file",
+    "zero-dependencies"
+  ],
+  "scripts": {
+    "build": "npm run build:dev && npm run build:prod",
+    "build:dev": "cp src/railroad-runtime.js dist/railroad-runtime.js",
+    "build:prod": "terser src/railroad-runtime.js -c -m -o dist/railroad-runtime.min.js",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/railroad-runtime.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/railroad-runtime/issues"
+  },
+  "homepage": "https://github.com/your-org/railroad-runtime#readme",
+  "author": "SignaVision Team",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "terser": "^5.27.0"
+  },
+  "files": [
+    "dist/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ]
+}
