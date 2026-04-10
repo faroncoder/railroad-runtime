@@ -9,7 +9,14 @@
 
 Not a framework. A foundation.
 
-🚂 **Modules board once, ride forever, work at every station.**
+ **Modules board once, ride forever, work at every station.**
+
+**Modules:  railroad-loader, railroad-toasts, railroad-drawer, railroad-demo-full
+
+https://github.com/faroncoder/railroad-loader.git
+https://github.com/faroncoder/railroad-toasts.git
+https://github.com/faroncoder/railroad-drawer.git
+https://github.com/faroncoder/railroad-demo-full.git
 
 ## The Philosophy
 
@@ -17,10 +24,10 @@ Other libraries detect DOM changes automatically (MutationObserver).
 **Railroad enforces explicit governance** — every mutation must declare itself.
 
 ```javascript
-// ❌ Automatic (ungoverned)
+//  Automatic (ungoverned)
 container.innerHTML = html;  // Stimulus detects silently
 
-// ✅ Governed (explicit intent)
+//  Governed (explicit intent)
 container.innerHTML = html;
 RAILROAD.rebind(container, 'api-update');  // Declares intent
 ```
@@ -125,17 +132,17 @@ Register a module to the lifecycle bus.
 **⚠️ Important:** The function signature must match the module type:
 
 ```javascript
-// ✅ CORRECT - DOM module receives root
+//  CORRECT - DOM module receives root
 RAILROAD.register(function(root) {
   root.querySelectorAll('[data-feature]')...
 }, { type: 'dom', name: 'features' });
 
-// ✅ CORRECT - Global module receives nothing
+//  CORRECT - Global module receives nothing
 RAILROAD.register(function() {
   initAnalytics();
 }, { type: 'global', name: 'analytics' });
 
-// ❌ WRONG - Global module can't use root
+//  WRONG - Global module can't use root
 RAILROAD.register(function(root) {
   root.querySelectorAll(...)  // root is undefined!
 }, { type: 'global' });  // Won't receive root parameter
