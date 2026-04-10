@@ -246,14 +246,14 @@ RAILROAD.register(function() {
 ### Manual DOM Changes
 
 ```javascript
-// ⚠️ ALWAYS call rebind after manual changes
+// ALWAYS call rebind after manual changes
 container.innerHTML = html;
 RAILROAD.rebind(container, 'source');
 
-// ⚠️ Applies to: innerHTML, replaceWith, appendChild, etc.
+// Applies to: innerHTML, replaceWith, appendChild, etc.
 ```
 
-**⚠️ `rebind()` only affects DOM modules:**
+**WARNING: `rebind()` only affects DOM modules:**
 
 ```javascript
 // DOM module - will re-run

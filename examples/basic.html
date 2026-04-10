@@ -65,7 +65,7 @@
         <p>Notice the button still works because we called RAILROAD.rebind()</p>
       `;
       
-      // ⚠️ CRITICAL: Must call rebind after manual DOM change
+      // CRITICAL: Must call rebind after manual DOM change
       RAILROAD.rebind(content, 'manual-update');
     }
 
